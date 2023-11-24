@@ -28,7 +28,8 @@ class ModelTest(TestCase):
         )
 
         self.assertEqual(user.email, email)
-        self.assertTrue(user.check_password(password))  # Hashed password need to be checked
+        self.assertTrue(user.check_password(password))
+        # Hashed password need to be checked
 
     def test_new_user_email_normalized(self):
         """Test email is normalized for new users"""
@@ -85,7 +86,10 @@ class ModelTest(TestCase):
     def test_create_ingredient(self):
         """Test creating an ingredient is successful"""
         user = create_user()
-        ingredient = models.Ingredient.objects.create(user=user, name='Ingredient1')
+        ingredient = models.Ingredient.objects.create(
+            user=user,
+            name='Ingredient1'
+        )
 
         self.assertEqual(str(ingredient), ingredient.name)
 

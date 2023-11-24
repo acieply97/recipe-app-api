@@ -76,7 +76,10 @@ class PrivateRecipeAPITest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user(email='user@example.com', password='test123sdfg')
+        self.user = create_user(
+            email='user@example.com',
+            password='test123sdfg'
+        )
         self.client.force_authenticate(self.user)
 
     def test_retrieve_recipes(self):
@@ -95,7 +98,10 @@ class PrivateRecipeAPITest(TestCase):
     def test_recipe_list_limited_to_user(self):
         """Test list recipes is limited to authenticated user"""
 
-        other_user = create_user(email='other@example.com', password='testpassword123')
+        other_user = create_user(
+            email='other@example.com',
+            password='testpassword123'
+        )
 
         create_recipe(user=other_user)
         create_recipe(user=self.user)
@@ -134,9 +140,9 @@ class PrivateRecipeAPITest(TestCase):
 
     def test_partial_update(self):
         """Test partial update of a recipe"""
-        original_link = 'https://recipe-example.com'  # It's used for checking partial update isn't change the variable
-        recipe = create_recipe(
-            user=self.user,
+        original_link = 'https://recipe-example.com'  # It's used for checking
+        recipe = create_recipe(  # partial update isn't
+            user=self.user,  # change the variable
             title='Sample recipe title',
             link=original_link,
         )
@@ -179,7 +185,10 @@ class PrivateRecipeAPITest(TestCase):
 
     def test_update_user_returns_error(self):
         """Test changing the recipe user results in an error"""
-        new_user = create_user(email='user2@example.com', password='pssword123')
+        new_user = create_user(
+            email='user2@example.com',
+            password='pssword123'
+        )
         recipe = create_recipe(user=self.user)
 
         payload = {'user': new_user.id}
@@ -201,7 +210,10 @@ class PrivateRecipeAPITest(TestCase):
 
     def test_recipe_other_users_recipe_error(self):
         """Test trying to delete another users recipe gives error"""
-        new_user = create_user(email='user2@example.com', password='pssword123')
+        new_user = create_user(
+            email='user2@example.com',
+            password='pssword123'
+        )
         recipe = create_recipe(user=new_user)
 
         url = detail_url(recipe.id)
@@ -267,7 +279,8 @@ class PrivateRecipeAPITest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         new_tag = Tag.objects.get(user=self.user, name='Lunch')
-        self.assertIn(new_tag, recipe.tags.all())  # Other query, don't need to refresh_from_db()
+        self.assertIn(new_tag, recipe.tags.all())
+        # Other query, don't need to refresh_from_db()
 
     def test_update_recipe_assign_tag(self):
         """Test assigning an existing tag when updating a recipe"""
@@ -383,12 +396,56 @@ class PrivateRecipeAPITest(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.ingredients.count(), 0)
 
+    def test_filer_by_tags(self):
+        """Test filtering recipes by tags"""
+        recipe1 = create_recipe(user=self.user, title='Thai Curry')
+        recipe2 = create_recipe(user=self.user, title='Aubergine')
+        tag1 = Tag.objects.create(user=self.user, name='Vegan')
+        tag2 = Tag.objects.create(user=self.user, name='Vegetarian')
+        recipe1.tags.add(tag1)
+        recipe2.tags.add(tag2)
+        recipe3 = create_recipe(user=self.user, title='Fish and chips')
+
+        params = {'tags': f'{tag1.id},{tag2.id}'}
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(recipe1)
+        s2 = RecipeSerializer(recipe2)
+        s3 = RecipeSerializer(recipe3)
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
+    def test_filter_by_ingedients(self):
+        """Test filtering recipes by ingredients"""
+        recipe1 = create_recipe(user=self.user, title='Posh Beans on Toast')
+        recipe2 = create_recipe(user=self.user, title='Chicken Cacciatore')
+        in1 = Ingredient.objects.create(user=self.user, name='Feta cheese')
+        in2 = Ingredient.objects.create(user=self.user, name='Chicken')
+        recipe1.ingredients.add(in1)
+        recipe2.ingredients.add(in2)
+        recipe3 = create_recipe(user=self.user, title='Red Lentil Daal')
+
+        params = {'ingredients': f'{in1.id},{in2.id}'}
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(recipe1)
+        s2 = RecipeSerializer(recipe2)
+        s3 = RecipeSerializer(recipe3)
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
 
 class ImageUploadTests(TestCase):
     """Test for the image upload API"""
+
     def setUp(self):
         self.client = APIClient()
-        self.user = create_user(email='user@example.com',password='password123')
+        self.user = create_user(
+            email='user@example.com',
+            password='password123'
+        )
         self.client.force_authenticate(self.user)
         self.recipe = create_recipe(user=self.user)
 
